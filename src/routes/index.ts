@@ -5,6 +5,7 @@ import type { Request, Response } from "express";
 import OrdersController from "../controllers/OrdersController.js";
 import ClientsController from "../controllers/ClientsController.js";
 import ChangeAddressController from "../controllers/ChangeAddressController.js";
+import InvoiceController from "../controllers/InvoiceController.js";
 
 // Middlewares
 import authToken from "../middlewares/authToken.js";
@@ -49,6 +50,14 @@ routes.put(
   "/api/change-address-app/update-address",
   async (req: Request, res: Response) => {
     await ChangeAddressController.updateAddress(req, res);
+  },
+);
+
+routes.get(
+  "/api/get-invoices",
+  authToken,
+  async (req: Request, res: Response) => {
+    await InvoiceController.getInvoices(req, res);
   },
 );
 
