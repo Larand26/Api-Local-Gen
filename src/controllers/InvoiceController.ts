@@ -4,11 +4,18 @@ import type { Request, Response } from "express";
 abstract class InvoiceController {
   static async getInvoices(req: Request, res: Response) {
     try {
-      const { from, to } = req.body;
+      const { from, to } = req.query;
       if (!from || !to) {
         return res.status(400).json({ success: false, error: "Missing date" });
       }
-      const filters = { dates: { from: new Date(from), to: new Date(to) } };
+      const fromDate = new Date(String(from));
+      const toDate = new Date(String(to));
+
+      if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+        return res.status(400).json({ success: false, error: "Invalid date" });
+      }
+
+      const filters = { dates: { from: fromDate, to: toDate } };
       const result = await InvoiceService.getInvoices(filters);
       if (!result.success) {
         return res.status(500).json({ success: false, error: result.error });
