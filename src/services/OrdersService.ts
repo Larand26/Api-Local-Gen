@@ -45,6 +45,19 @@ abstract class OrdersService {
       return { success: false, error: "Failed to fetch orders" };
     }
   }
+
+  static async getOrdersByCnpj(cnpj: string): Promise<Iresponse> {
+    try {
+      const query = `SELECT P.[ID_NUMPEDORC] AS order_id, P.[PEDOR_VLRTOTAL] AS total_value FROM [PEDIDOORCAMENTO] P INNER JOIN [ENTIDADES] E ON P.[ID_CODENTIDADE] = E.[ID_CODENTIDADE] WHERE P.[ID_CODFILIAIS] = 1 AND P.[PEDOR_SITUACAO] = 'Atendido' AND E.[ENTI_CNPJCPF] = @cnpj`;
+
+      const orders = await SqlServer.query(query, { cnpj: cnpj });
+
+      return { success: true, data: orders };
+    } catch (error) {
+      console.error("Error fetching orders by CNPJ:", error);
+      return { success: false, error: "Failed to fetch orders by CNPJ" };
+    }
+  }
 }
 
 export default OrdersService;

@@ -61,4 +61,12 @@ routes.get(
   },
 );
 
+routes.get(
+  "/api/get-orders/:cnpj",
+  authToken,
+  async (req: Request, res: Response) => {
+    await OrdersController.getOrdersByCnpj(req, res);
+  },
+);
+
 export default routes;
