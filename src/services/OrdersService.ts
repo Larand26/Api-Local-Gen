@@ -48,7 +48,16 @@ abstract class OrdersService {
 
   static async getOrdersByCnpj(cnpj: string): Promise<Iresponse> {
     try {
-      const query = `SELECT P.[ID_NUMPEDORC] AS order_id, P.[PEDOR_VLRTOTAL] AS total_value FROM [PEDIDOORCAMENTO] P INNER JOIN [ENTIDADES] E ON P.[ID_CODENTIDADE] = E.[ID_CODENTIDADE] WHERE P.[ID_CODFILIAIS] = 1 AND P.[PEDOR_SITUACAO] = 'Atendido' AND E.[ENTI_CNPJCPF] = @cnpj`;
+      const query = `SELECT 
+P.[ID_NUMPEDORC] AS order_id,
+P.[PEDOR_VLRTOTAL] AS total_value,
+V.[VEND_NOME] AS seller_name
+FROM [PEDIDOORCAMENTO] P
+INNER JOIN [ENTIDADES] E ON P.[ID_CODENTIDADE] = E.[ID_CODENTIDADE]
+INNER JOIN [VENDEDORES] V ON P.[ID_CODVENDEDOR] = V.[ID_CODVENDEDOR]
+WHERE P.[ID_CODFILIAIS] = 1
+AND P.[PEDOR_SITUACAO] = 'Atendido'
+AND E.[ENTI_CNPJCPF] = @cnpj`;
 
       const orders = await SqlServer.query(query, { cnpj: cnpj });
 
