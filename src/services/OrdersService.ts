@@ -49,6 +49,7 @@ abstract class OrdersService {
   static async getOrdersByCnpj(cnpj: string): Promise<Iresponse> {
     try {
       const query = `SELECT 
+P.[ID_CODENTIDADE] AS entity_id,
 P.[ID_NUMPEDORC] AS order_id,
 P.[PEDOR_VLRTOTAL] AS total_value,
 V.[VEND_NOME] AS seller_name
