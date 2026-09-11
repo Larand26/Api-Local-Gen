@@ -3,28 +3,33 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copia dependências e instala
-COPY package.json package-lock.json* ./
+# Copia os manifests de dependências
+COPY package*.json ./
+
+# Instala todas as dependências (inclusive devDependencies para o tsc)
 RUN npm install
 
-# Copia o resto do código e compila a aplicação
+# Copia o código-fonte e compila (tsc + scripts/copy-assets.js)
 COPY . .
 RUN npm run build
 
+# --- ETAPA 2: Execução (Produção) ---
+FROM node:20-alpine AS runner
 
-# --- ETAPA 2: Servidor Web (Produção) ---
-FROM nginx:alpine
+WORKDIR /app
 
-# Remove os arquivos padrão do Nginx
-RUN rm -rf /usr/share/nginx/html/*
+ENV NODE_ENV=production
 
-# Copia os arquivos compilados da ETAPA 1 (builder) para a pasta pública do Nginx
-# NOTA: O Vite, por padrão, gera os arquivos compilados na pasta "dist". 
-# Se o seu projeto gera em "build", mude "dist" para "build" na linha abaixo.
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copia manifests e instala apenas dependências de produção
+COPY package*.json ./
+RUN npm install --omit=dev
 
-# Expõe a porta 80 (porta padrão do Nginx)
-EXPOSE 80
+# Copia o build e arquivos gerados da etapa anterior
+COPY --from=builder /app/dist ./dist
 
-# Inicia o Nginx e o mantém rodando em primeiro plano
-CMD ["nginx", "-g", "daemon off;"]
+# Caso seu script scripts/copy-assets.js copie algo para fora de dist,
+# certifique-se de que foi copiado ou exponha a porta da sua API aqui:
+EXPOSE 3000
+
+# Inicia a aplicação usando o script start configurado
+CMD ["npm", "start"]
