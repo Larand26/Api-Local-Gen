@@ -6,11 +6,13 @@ WORKDIR /app
 # Copia os manifests de dependências
 COPY package*.json ./
 
-# Instala todas as dependências (inclusive devDependencies para o tsc)
+# Instala todas as dependências necessárias para o build (incluindo devDependencies)
 RUN npm install
 
-# Copia o código-fonte e compila (tsc + scripts/copy-assets.js)
+# Copia o código-fonte do projeto
 COPY . .
+
+# Executa a compilação (tsc && node scripts/copy-assets.js)
 RUN npm run build
 
 # --- ETAPA 2: Execução (Produção) ---
@@ -20,16 +22,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copia manifests e instala apenas dependências de produção
+# Copia manifests e instala apenas as dependências de produção
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copia o build e arquivos gerados da etapa anterior
+# Copia o resultado do build gerado na etapa 1
 COPY --from=builder /app/dist ./dist
 
-# Caso seu script scripts/copy-assets.js copie algo para fora de dist,
-# certifique-se de que foi copiado ou exponha a porta da sua API aqui:
+# Expõe a porta padrão da API (ajuste caso use outra)
 EXPOSE 3000
 
-# Inicia a aplicação usando o script start configurado
+# Executa o comando de inicialização (node dist/server.js)
 CMD ["npm", "start"]
