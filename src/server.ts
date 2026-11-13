@@ -4,12 +4,14 @@ import serverConfig from "./config/serverConfig.js";
 import OrdersService from "./services/OrdersService.js";
 import ClientsService from "./services/ClientsService.js";
 import InvoiceService from "./services/InvoiceService.js";
+import ProductsService from "./services/ProductsService.js";
 
 async function initialize() {
   try {
     await OrdersService.initialize();
     await InvoiceService.initialize();
     await ClientsService.initialize();
+    await ProductsService.initialize();
   } catch (error) {
     console.error("Initialization error:", error);
     process.exit(1);

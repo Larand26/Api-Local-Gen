@@ -6,6 +6,7 @@ import OrdersController from "../controllers/OrdersController.js";
 import ClientsController from "../controllers/ClientsController.js";
 import ChangeAddressController from "../controllers/ChangeAddressController.js";
 import InvoiceController from "../controllers/InvoiceController.js";
+import ProductsController from "../controllers/ProductsController.js";
 
 // Middlewares
 import authToken from "../middlewares/authToken.js";
@@ -66,6 +67,14 @@ routes.get(
   authToken,
   async (req: Request, res: Response) => {
     await OrdersController.getOrdersByCnpj(req, res);
+  },
+);
+
+routes.get(
+  "/api/get-products",
+  authToken,
+  async (req: Request, res: Response) => {
+    await ProductsController.getProducts(req, res);
   },
 );
 

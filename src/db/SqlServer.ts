@@ -1,7 +1,7 @@
 import sql from "mssql";
 import sqlserverConfig from "../config/sqlserverConfig.js";
 
-type SqlValue = string | number | boolean;
+type SqlValue = string | number | boolean | null;
 type QueryParams = Record<string, SqlValue> | SqlValue[];
 
 class SqlServer {
