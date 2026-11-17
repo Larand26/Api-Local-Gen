@@ -58,6 +58,22 @@ abstract class ProductsService {
       .join("");
   }
 
+  // Converte a grade "33:1,34:2" em [{ size: "33", quantity: 1 }, { size: "34", quantity: 2 }]
+  private static parseGrid(
+    grid: string | null,
+  ): { size: string; quantity: number }[] {
+    if (!grid) {
+      return [];
+    }
+    return grid.split(",").map((pair) => {
+      const separator = pair.lastIndexOf(":");
+      return {
+        size: pair.slice(0, separator).trim(),
+        quantity: Number(pair.slice(separator + 1)),
+      };
+    });
+  }
+
   static async getProducts(filters: IproductFilters): Promise<Iresponse> {
     try {
       if (!this.query) {
@@ -85,7 +101,10 @@ abstract class ProductsService {
       });
 
       const total = rows[0]?.total_count ?? 0;
-      const data = rows.map(({ total_count, ...product }) => product);
+      const data = rows.map(({ total_count, grid, ...product }) => ({
+        ...product,
+        grid: this.parseGrid(grid),
+      }));
 
       return {
         success: true,

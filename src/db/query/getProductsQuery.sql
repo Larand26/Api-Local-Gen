@@ -16,6 +16,26 @@ SET NOCOUNT ON;
 IF OBJECT_ID('tempdb..#Grupos') IS NOT NULL DROP TABLE #Grupos;
 IF OBJECT_ID('tempdb..#ListaProdutos') IS NOT NULL DROP TABLE #ListaProdutos;
 IF OBJECT_ID('tempdb..#Filtros') IS NOT NULL DROP TABLE #Filtros;
+IF OBJECT_ID('tempdb..#Grades') IS NOT NULL DROP TABLE #Grades;
+
+-- Grade de cada produto (GRADE_TAMANHO_ECOMERCE), uma linha por grade:
+-- grid = "NUMERO:QUANTIDADE,NUMERO:QUANTIDADE,..." (ex.: "33:1,34:2,35:2").
+-- Numeração e quantidade saem no mesmo par para não desalinharem; o ProductsService
+-- converte em lista. FOR XML PATH em vez de STRING_AGG (nível de compatibilidade 100).
+SELECT
+    GT.[ID_GRADE_ECOMERCE],
+    STUFF((
+        SELECT ',' + CONVERT(VARCHAR(20), G2.[NUMERO]) + ':' + CONVERT(VARCHAR(20), G2.[QUANTIDADE])
+        FROM [GRADE_TAMANHO_ECOMERCE] G2
+        WHERE G2.[ID_GRADE_ECOMERCE] = GT.[ID_GRADE_ECOMERCE]
+        ORDER BY G2.[NUMERO]
+        FOR XML PATH(''), TYPE
+    ).value('.', 'varchar(max)'), 1, 1, '') AS grid
+INTO #Grades
+FROM [GRADE_TAMANHO_ECOMERCE] GT
+GROUP BY GT.[ID_GRADE_ECOMERCE];
+
+CREATE UNIQUE CLUSTERED INDEX IX_Grades ON #Grades ([ID_GRADE_ECOMERCE]);
 
 -- 0) Valores de cada filtro, um por linha: (campo, valor)
 CREATE TABLE #Filtros (
@@ -96,6 +116,7 @@ SELECT
     L.[LITABPRE_VALPROMOCAO] AS pricePromotion,
     PE.[CODIGO_COR] AS color_code,
     C.[DESCRICAO] AS color_description,
+    PE.[ID_GRADE_ECOMERCE] AS grid_id,
     VI.[ID_CODGRUPO] AS group_id,
     (VI.[PROD_ESTATUAL] - ISNULL(R.QuantidadeReservada, 0)) AS stock
 INTO #ListaProdutos
@@ -128,9 +149,13 @@ SELECT
     G.Linha AS line,
     G.Material AS material,
     LP.stock,
+    LP.grid_id,
+    GR.grid,
     COUNT(*) OVER () AS total_count
 FROM #ListaProdutos LP
 INNER JOIN #Grupos G ON LP.group_id = G.[ID_CODGRUPO]
+-- Grade junto com os grupos (etapa 3), fora da lista base, pelo mesmo motivo da etapa 2
+LEFT JOIN #Grades GR ON LP.grid_id = GR.[ID_GRADE_ECOMERCE]
 -- Códigos: comparação exata com qualquer um dos valores informados
 WHERE (@id IS NULL OR EXISTS (SELECT 1 FROM #Filtros F WHERE F.campo = 'id' AND LP.id = F.valor))
 AND (@barcode IS NULL OR EXISTS (SELECT 1 FROM #Filtros F WHERE F.campo = 'barcode' AND LP.barcode = F.valor))
@@ -155,3 +180,4 @@ OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;
 DROP TABLE #ListaProdutos;
 DROP TABLE #Grupos;
 DROP TABLE #Filtros;
+DROP TABLE #Grades;
